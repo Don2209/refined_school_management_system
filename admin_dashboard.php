@@ -5,16 +5,47 @@ session_start();
 // Include the database configuration
 include 'config.php';
 
-// Fetch summary data
-$totalStudents = $conn->query("SELECT COUNT(*) AS count FROM students")->fetch_assoc()['count'];
-$totalStaff = $conn->query("SELECT COUNT(*) AS count FROM staff")->fetch_assoc()['count'];
-$totalClasses = $conn->query("SELECT COUNT(*) AS count FROM classes")->fetch_assoc()['count'];
-$totalSubjects = $conn->query("SELECT COUNT(*) AS count FROM subjects")->fetch_assoc()['count'];
+// Fetch user role and associated ID
+$userRole = $_SESSION['user_role'];
+$associatedId = $_SESSION['associated_id'];
 
-// Fetch fee summary
-$feeSummary = $conn->query("SELECT SUM(amount_paid) AS total_paid, SUM(balance) AS total_balance FROM fee_management")->fetch_assoc();
-$totalFeesPaid = $feeSummary['total_paid'];
-$totalFeesBalance = $feeSummary['total_balance'];
+// Filter data based on user role
+if ($userRole === 'Admin') {
+    // Admin sees all data
+    $totalStudents = $conn->query("SELECT COUNT(*) AS count FROM students")->fetch_assoc()['count'];
+    $totalStaff = $conn->query("SELECT COUNT(*) AS count FROM staff")->fetch_assoc()['count'];
+    $totalClasses = $conn->query("SELECT COUNT(*) AS count FROM classes")->fetch_assoc()['count'];
+    $totalSubjects = $conn->query("SELECT COUNT(*) AS count FROM subjects")->fetch_assoc()['count'];
+    $feeSummary = $conn->query("SELECT SUM(amount_paid) AS total_paid, SUM(balance) AS total_balance FROM fee_management")->fetch_assoc();
+} elseif ($userRole === 'Teacher') {
+    // Teachers see data related to their classes and subjects
+    $totalStudents = $conn->query("SELECT COUNT(*) AS count FROM students WHERE current_class_id IN (
+        SELECT class_id FROM classes WHERE class_teacher_id = $associatedId
+    )")->fetch_assoc()['count'];
+    $totalStaff = 1; // Teachers only see themselves
+    $totalClasses = $conn->query("SELECT COUNT(*) AS count FROM classes WHERE class_teacher_id = $associatedId")->fetch_assoc()['count'];
+    $totalSubjects = $conn->query("SELECT COUNT(*) AS count FROM class_subjects WHERE teacher_id = $associatedId")->fetch_assoc()['count'];
+    $feeSummary = ['total_paid' => 0, 'total_balance' => 0]; // Teachers don't see fee data
+} elseif ($userRole === 'Parent') {
+    // Parents see data related to their child
+    $totalStudents = 1; // Parents only see their child
+    $totalStaff = 0; // Parents don't see staff data
+    $totalClasses = $conn->query("SELECT COUNT(*) AS count FROM classes WHERE class_id = (
+        SELECT current_class_id FROM students WHERE student_id = $associatedId
+    )")->fetch_assoc()['count'];
+    $totalSubjects = $conn->query("SELECT COUNT(*) AS count FROM class_subjects WHERE class_id = (
+        SELECT current_class_id FROM students WHERE student_id = $associatedId
+    )")->fetch_assoc()['count'];
+    $feeSummary = $conn->query("SELECT SUM(amount_paid) AS total_paid, SUM(balance) AS total_balance 
+        FROM fee_management WHERE student_id = $associatedId")->fetch_assoc();
+} else {
+    // Default to no data for other roles
+    $totalStudents = 0;
+    $totalStaff = 0;
+    $totalClasses = 0;
+    $totalSubjects = 0;
+    $feeSummary = ['total_paid' => 0, 'total_balance' => 0];
+}
 
 // Fetch student enrollment trends
 $enrollmentTrends = $conn->query("SELECT academic_years.name AS year, COUNT(students.student_id) AS total_students 

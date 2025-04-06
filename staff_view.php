@@ -7,8 +7,19 @@ if (session_status() === PHP_SESSION_NONE) {
 // Include the database configuration
 include 'config.php';
 
-// Fetch all staff members
-$staff = $conn->query("SELECT staff_id, first_name, last_name, gender, position, qualification_level, employment_date FROM staff");
+// Restrict access to Admin and Teacher roles
+checkAccess(['Admin', 'Teacher']);
+
+// Filter staff based on user role
+if ($userRole === 'Admin') {
+    $staff = $conn->query("SELECT staff_id, first_name, last_name, gender, position, qualification_level, employment_date FROM staff");
+} elseif ($userRole === 'Teacher') {
+    $staff = $conn->query("SELECT staff_id, first_name, last_name, gender, position, qualification_level, employment_date 
+        FROM staff 
+        WHERE staff_id = $associatedId");
+} else {
+    $staff = $conn->query("SELECT * FROM staff WHERE 1=0"); // No data for other roles
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

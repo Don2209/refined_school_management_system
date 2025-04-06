@@ -7,12 +7,39 @@ if (session_status() === PHP_SESSION_NONE) {
 // Include the database configuration
 include 'config.php';
 
-// Fetch all classes
-$classes = $conn->query("SELECT classes.class_id, classes.class_name, academic_years.name AS academic_year, 
-    classes.stream, CONCAT(staff.first_name, ' ', staff.last_name) AS class_teacher 
-    FROM classes 
-    JOIN academic_years ON classes.academic_year_id = academic_years.academic_year_id 
-    LEFT JOIN staff ON classes.class_teacher_id = staff.staff_id");
+// Fetch user role and associated ID
+$userRole = $_SESSION['user_role'];
+$associatedId = $_SESSION['associated_id'];
+
+// Restrict access to Admin, Teacher, and Parent roles
+checkAccess(['Admin', 'Teacher', 'Parent']);
+
+// Filter classes based on user role
+if ($userRole === 'Teacher') {
+    $classes = $conn->query("SELECT classes.class_id, classes.class_name, academic_years.name AS academic_year, 
+        classes.stream, CONCAT(staff.first_name, ' ', staff.last_name) AS class_teacher 
+        FROM classes 
+        JOIN academic_years ON classes.academic_year_id = academic_years.academic_year_id 
+        LEFT JOIN staff ON classes.class_teacher_id = staff.staff_id 
+        WHERE classes.class_teacher_id = $associatedId");
+} elseif ($userRole === 'Parent') {
+    $classes = $conn->query("SELECT classes.class_id, classes.class_name, academic_years.name AS academic_year, 
+        classes.stream, CONCAT(staff.first_name, ' ', staff.last_name) AS class_teacher 
+        FROM classes 
+        JOIN academic_years ON classes.academic_year_id = academic_years.academic_year_id 
+        LEFT JOIN staff ON classes.class_teacher_id = staff.staff_id 
+        WHERE classes.class_id = (
+            SELECT current_class_id FROM students WHERE student_id = $associatedId
+        )");
+} elseif ($userRole === 'Admin') {
+    $classes = $conn->query("SELECT classes.class_id, classes.class_name, academic_years.name AS academic_year, 
+        classes.stream, CONCAT(staff.first_name, ' ', staff.last_name) AS class_teacher 
+        FROM classes 
+        JOIN academic_years ON classes.academic_year_id = academic_years.academic_year_id 
+        LEFT JOIN staff ON classes.class_teacher_id = staff.staff_id");
+} else {
+    $classes = $conn->query("SELECT * FROM classes WHERE 1=0"); // No data for other roles
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

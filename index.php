@@ -16,28 +16,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
-        if ($password === $user['password_hash']) { // Direct comparison since passwords are not hashed
+        if (password_verify($password, $user['password_hash'])) {
             // Successful login
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['user_role'] = $user['user_role'];
-
-            // Redirect based on user role
-            switch ($user['user_role']) {
-                case 'Admin':
-                    header("Location: admin_dashboard.php");
-                    break;
-                case 'Teacher':
-                    header("Location: teacher_dashboard.php");
-                    break;
-                case 'Accountant':
-                    header("Location: accountant_dashboard.php");
-                    break;
-                case 'Parent':
-                    header("Location: parent_dashboard.php");
-                    break;
-                default:
-                    $error = "Invalid user role.";
-            }
+            header("Location: dashboard.php"); // Redirect to dashboard
             exit;
         } else {
             $error = "Invalid password.";

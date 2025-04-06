@@ -7,16 +7,11 @@ if (session_status() === PHP_SESSION_NONE) {
 // Include the database configuration
 include 'config.php';
 
-// Fetch all subjects
-// Filter subjects based on user role
-if ($userRole === 'Teacher') {
-    $subjects = $conn->query("SELECT subjects.subject_id, subjects.zimsec_code, subjects.subject_name, subjects.level, subjects.is_core 
-        FROM subjects 
-        JOIN class_subjects ON subjects.subject_id = class_subjects.subject_id 
-        WHERE class_subjects.teacher_id = $associatedId");
-} else {
-    $subjects = $conn->query("SELECT subject_id, zimsec_code, subject_name, level, is_core FROM subjects");
-}
+// Fetch guardians
+$guardians = $conn->query("SELECT guardians.guardian_id, CONCAT(students.first_name, ' ', students.last_name) AS student_name, 
+    guardians.full_name, guardians.relationship, guardians.contact_number, guardians.email, guardians.is_primary 
+    FROM guardians 
+    JOIN students ON guardians.student_id = students.student_id");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -25,7 +20,7 @@ if ($userRole === 'Teacher') {
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
 	<link rel="stylesheet" href="css/style.css">
-	<title>View Subjects</title>
+	<title>View Guardians</title>
 	<script src="js/dropdown.js" defer></script>
 </head>
 <body>
@@ -38,35 +33,37 @@ if ($userRole === 'Teacher') {
 		<?php include 'includes/navbar.php'; ?>
 		<!-- MAIN -->
 		<main>
-			<h1 class="title">View Subjects</h1>
+			<h1 class="title">View Guardians</h1>
 			<ul class="breadcrumbs">
 				<li><a href="admin_dashboard.php">Home</a></li>
 				<li class="divider">/</li>
-				<li><a href="#" class="active">View Subjects</a></li>
+				<li><a href="#" class="active">View Guardians</a></li>
 			</ul>
 			<div class="data">
 				<div class="content-data">
 					<div class="head">
-						<h3>All Subjects</h3>
+						<h3>All Guardians</h3>
 					</div>
 					<table class="styled-table">
 						<thead>
 							<tr>
-								<th>ID</th>
-								<th>ZIMSEC Code</th>
-								<th>Subject Name</th>
-								<th>Level</th>
-								<th>Core Subject</th>
+								<th>Guardian Name</th>
+								<th>Student Name</th>
+								<th>Relationship</th>
+								<th>Contact Number</th>
+								<th>Email</th>
+								<th>Primary Guardian</th>
 							</tr>
 						</thead>
 						<tbody>
-							<?php while ($row = $subjects->fetch_assoc()): ?>
+							<?php while ($row = $guardians->fetch_assoc()): ?>
 								<tr>
-									<td><?php echo $row['subject_id']; ?></td>
-									<td><?php echo $row['zimsec_code']; ?></td>
-									<td><?php echo $row['subject_name']; ?></td>
-									<td><?php echo $row['level']; ?></td>
-									<td><?php echo $row['is_core'] ? 'Yes' : 'No'; ?></td>
+									<td><?php echo $row['full_name']; ?></td>
+									<td><?php echo $row['student_name']; ?></td>
+									<td><?php echo $row['relationship']; ?></td>
+									<td><?php echo $row['contact_number']; ?></td>
+									<td><?php echo $row['email']; ?></td>
+									<td><?php echo $row['is_primary'] ? 'Yes' : 'No'; ?></td>
 								</tr>
 							<?php endwhile; ?>
 						</tbody>

@@ -62,19 +62,17 @@ li {
 	display: none;
 }
 #sidebar .brand {
-	font-size: 24px;
+	font-size: 20px;
+	font-weight: bold;
 	display: flex;
 	align-items: center;
-	height: 64px;
-	font-weight: 700;
+	padding: 20px;
 	color: var(--blue);
-	position: sticky;
-	top: 0;
-	left: 0;
-	z-index: 100;
 	background: var(--light);
-	transition: all .3s ease;
-	padding: 0 6px;
+	border-bottom: 1px solid var(--grey);
+}
+#sidebar .brand .brand-name {
+	margin-left: 10px;
 }
 #sidebar .icon {
 	min-width: 48px;
@@ -101,13 +99,15 @@ li {
 #sidebar .side-menu a {
 	display: flex;
 	align-items: center;
+	padding: 12px 20px;
+	color: var(--dark-grey);
 	font-size: 14px;
-	color: var(--dark);
-	padding: 12px 16px 12px 0;
-	transition: all .3s ease;
-	border-radius: 10px;
-	margin: 4px 0;
-	white-space: nowrap;
+	border-radius: 8px;
+	transition: all 0.3s ease;
+}
+#sidebar .side-menu a:hover {
+	background: var(--blue);
+	color: var(--light);
 }
 #sidebar .side-menu > li > a:hover {
 	background: var(--grey);
@@ -186,6 +186,13 @@ li {
 #sidebar .ads .wrapper p span {
 	font-weight: 700;
 }
+#sidebar .side-menu .dropdown-menu {
+	padding-left: 20px;
+}
+#sidebar .side-menu .dropdown-menu a {
+	padding: 8px 20px;
+	font-size: 13px;
+}
 /* SIDEBAR */
 
 /* CONTENT */
@@ -202,15 +209,11 @@ li {
 /* NAVBAR */
 nav {
 	background: var(--light);
-	height: 64px;
-	padding: 0 20px;
+	padding: 10px 20px;
 	display: flex;
 	align-items: center;
-	grid-gap: 28px;
-	position: sticky;
-	top: 0;
-	left: 0;
-	z-index: 100;
+	justify-content: space-between;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 nav .toggle-sidebar {
 	font-size: 18px;
@@ -223,15 +226,14 @@ nav form {
 }
 nav .form-group {
 	position: relative;
+	width: 300px;
 }
 nav .form-group input {
 	width: 100%;
+	padding: 10px 40px 10px 15px;
+	border: 1px solid var(--grey);
+	border-radius: 20px;
 	background: var(--grey);
-	border-radius: 5px;
-	border: none;
-	outline: none;
-	padding: 10px 36px 10px 16px;
-	transition: all .3s ease;
 }
 nav .form-group input:focus {
 	box-shadow: 0 0 0 1px var(--blue), 0 0 0 4px var(--light-blue);
@@ -240,8 +242,13 @@ nav .form-group .icon {
 	position: absolute;
 	top: 50%;
 	transform: translateY(-50%);
-	right: 16px;
+	right: 15px;
 	color: var(--dark-grey);
+}
+nav .nav-links {
+	display: flex;
+	align-items: center;
+	gap: 20px;
 }
 nav .nav-link {
 	position: relative;
@@ -252,19 +259,17 @@ nav .nav-link .icon {
 }
 nav .nav-link .badge {
 	position: absolute;
-	top: -12px;
-	right: -12px;
-	width: 20px;
-	height: 20px;
-	border-radius: 50%;
-	border: 2px solid var(--light);
+	top: -5px;
+	right: -5px;
 	background: var(--red);
+	color: var(--light);
+	font-size: 10px;
+	width: 18px;
+	height: 18px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	color: var(--light);
-	font-size: 10px;
-	font-weight: 700;
+	border-radius: 50%;
 }
 nav .divider {
 	width: 1px;
@@ -274,43 +279,37 @@ nav .divider {
 }
 nav .profile {
 	position: relative;
+	cursor: pointer;
 }
 nav .profile img {
 	width: 36px;
 	height: 36px;
 	border-radius: 50%;
 	object-fit: cover;
-	cursor: pointer;
 }
 nav .profile .profile-link {
 	position: absolute;
-	top: calc(100% + 10px);
+	top: 50px;
 	right: 0;
 	background: var(--light);
-	padding: 10px 0;
-	box-shadow: 4px 4px 16px rgba(0, 0, 0, .1);
-	border-radius: 10px;
-	width: 160px;
-	opacity: 0;
-	pointer-events: none;
-	transition: all .3s ease;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	border-radius: 8px;
+	overflow: hidden;
+	display: none;
 }
-nav .profile .profile-link.show {
-	opacity: 1;
-	pointer-events: visible;
-	top: 100%;
+nav .profile:hover .profile-link {
+	display: block;
 }
 nav .profile .profile-link a {
-	padding: 10px 16px;
-	display: flex;
-	grid-gap: 10px;
+	display: block;
+	padding: 10px 20px;
+	color: var(--dark-grey);
 	font-size: 14px;
-	color: var(--dark);
-	align-items: center;
-	transition: all .3s ease;
+	transition: all 0.3s ease;
 }
 nav .profile .profile-link a:hover {
-	background: var(--grey);
+	background: var(--blue);
+	color: var(--light);
 }
 /* NAVBAR */
 
@@ -719,6 +718,7 @@ main .btn-send:hover {
 	display: block; /* Show when parent has 'open' class */
 }
 
+/* Dropdown styles */
 /* Dropdown styles */
 .dropdown {
 	position: relative;

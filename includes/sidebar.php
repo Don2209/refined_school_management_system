@@ -1,5 +1,8 @@
 <section id="sidebar">
-	<a href="#" class="brand"><i class='bx bxs-smile icon'></i> AdminSite</a>
+	<a href="#" class="brand">
+		<i class='bx bxs-smile icon'></i>
+		<span class="brand-name">AdminSite</span>
+	</a>
 	<ul class="side-menu">
 		<li class="dropdown">
 			<a href="#"><i class='bx bxs-user icon'></i> Students <i class='bx bx-chevron-down icon-right'></i></a>
@@ -55,6 +58,32 @@
 				<li><a href="users_add.php">Add User</a></li>
 			</ul>
 		</li>
+		<li class="dropdown">
+			<a href="#"><i class='bx bxs-user-detail icon'></i> Guardians <i class='bx bx-chevron-down icon-right'></i></a>
+			<ul class="dropdown-menu">
+				<li><a href="guardians_view.php">View Guardians</a></li>
+				<li><a href="guardians_add.php">Add Guardian</a></li>
+			</ul>
+		</li>
+		<li class="dropdown">
+			<a href="#"><i class='bx bxs-calendar icon'></i> Academic Years <i class='bx bx-chevron-down icon-right'></i></a>
+			<ul class="dropdown-menu">
+				<li><a href="academic_years_view.php">View Academic Years</a></li>
+				<li><a href="academic_years_add.php">Add Academic Year</a></li>
+			</ul>
+		</li>
+		<li class="dropdown">
+			<a href="#"><i class='bx bxs-calendar-event icon'></i> Terms <i class='bx bx-chevron-down icon-right'></i></a>
+			<ul class="dropdown-menu">
+				<li><a href="terms_view.php">View Terms</a></li>
+				<li><a href="terms_add.php">Add Term</a></li>
+			</ul>
+		</li>
+		<?php if ($userRole === 'Parent'): ?>
+		<li>
+			<a href="parent_results_view.php"><i class='bx bxs-bar-chart-alt-2 icon'></i> View Student Results</a>
+		</li>
+		<?php endif; ?>
 	</ul>
 </section>
 

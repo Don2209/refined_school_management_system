@@ -7,13 +7,38 @@ if (session_status() === PHP_SESSION_NONE) {
 // Include the database configuration
 include 'config.php';
 
-// Fetch academic results
-$results = $conn->query("SELECT academic_results.result_id, CONCAT(students.first_name, ' ', students.last_name) AS student_name, 
-    subjects.subject_name, academic_results.continuous_assessment, academic_results.final_exam, academic_results.total_mark, academic_results.grade 
-    FROM academic_results 
-    JOIN students ON academic_results.student_id = students.student_id 
-    JOIN class_subjects ON academic_results.class_subject_id = class_subjects.class_subject_id 
-    JOIN subjects ON class_subjects.subject_id = subjects.subject_id");
+// Fetch user role and associated ID
+$userRole = $_SESSION['user_role'];
+$associatedId = $_SESSION['associated_id'];
+
+// Restrict access to Admin, Teacher, and Parent roles
+checkAccess(['Admin', 'Teacher', 'Parent']);
+
+// Filter results based on user role
+if ($userRole === 'Parent') {
+    $results = $conn->query("SELECT academic_results.result_id, CONCAT(students.first_name, ' ', students.last_name) AS student_name, 
+        subjects.subject_name, academic_results.continuous_assessment, academic_results.final_exam, academic_results.total_mark, academic_results.grade 
+        FROM academic_results 
+        JOIN students ON academic_results.student_id = students.student_id 
+        JOIN class_subjects ON academic_results.class_subject_id = class_subjects.class_subject_id 
+        JOIN subjects ON class_subjects.subject_id = subjects.subject_id 
+        WHERE academic_results.student_id = $associatedId");
+} elseif ($userRole === 'Teacher') {
+    $results = $conn->query("SELECT academic_results.result_id, CONCAT(students.first_name, ' ', students.last_name) AS student_name, 
+        subjects.subject_name, academic_results.continuous_assessment, academic_results.final_exam, academic_results.total_mark, academic_results.grade 
+        FROM academic_results 
+        JOIN students ON academic_results.student_id = students.student_id 
+        JOIN class_subjects ON academic_results.class_subject_id = class_subjects.class_subject_id 
+        JOIN subjects ON class_subjects.subject_id = subjects.subject_id 
+        WHERE class_subjects.teacher_id = $associatedId");
+} else {
+    $results = $conn->query("SELECT academic_results.result_id, CONCAT(students.first_name, ' ', students.last_name) AS student_name, 
+        subjects.subject_name, academic_results.continuous_assessment, academic_results.final_exam, academic_results.total_mark, academic_results.grade 
+        FROM academic_results 
+        JOIN students ON academic_results.student_id = students.student_id 
+        JOIN class_subjects ON academic_results.class_subject_id = class_subjects.class_subject_id 
+        JOIN subjects ON class_subjects.subject_id = subjects.subject_id");
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

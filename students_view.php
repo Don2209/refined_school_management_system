@@ -7,8 +7,25 @@ if (session_status() === PHP_SESSION_NONE) {
 // Include the database configuration
 include 'config.php';
 
-// Fetch all students
-$students = $conn->query("SELECT student_id, first_name, last_name, gender, date_of_birth, enrollment_date, status FROM students");
+// Restrict access to Admin, Teacher, and Parent roles
+checkAccess(['Admin', 'Teacher', 'Parent']);
+
+// Filter students based on user role
+if ($userRole === 'Parent') {
+    $students = $conn->query("SELECT student_id, first_name, last_name, gender, date_of_birth, enrollment_date, status 
+        FROM students 
+        WHERE student_id = $associatedId");
+} elseif ($userRole === 'Teacher') {
+    $students = $conn->query("SELECT student_id, first_name, last_name, gender, date_of_birth, enrollment_date, status 
+        FROM students 
+        WHERE current_class_id IN (
+            SELECT class_id FROM classes WHERE class_teacher_id = $associatedId
+        )");
+} elseif ($userRole === 'Admin') {
+    $students = $conn->query("SELECT student_id, first_name, last_name, gender, date_of_birth, enrollment_date, status FROM students");
+} else {
+    $students = $conn->query("SELECT * FROM students WHERE 1=0"); // No data for other roles
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
