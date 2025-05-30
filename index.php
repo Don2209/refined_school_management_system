@@ -2,7 +2,10 @@
 // Include database configuration
 require_once 'config.php';
 
-session_start();
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $username = $_POST['username'];
@@ -16,11 +19,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
-        if (password_verify($password, $user['password_hash'])) {
+        if ($password === $user['password_hash']) { // Compare plain text password
             // Successful login
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['user_role'] = $user['user_role'];
-            header("Location: dashboard.php"); // Redirect to dashboard
+
+            // Redirect based on user role
+            if ($user['user_role'] === 'Parent') {
+                header("Location: parent_dashboard.php"); // Redirect parent users to parent dashboard
+            } elseif ($user['user_role'] === 'Teacher') {
+                header("Location: teacher_dashboard.php"); // Redirect teacher users to teacher dashboard
+            } elseif ($user['user_role'] === 'Student') {
+                header("Location: student_dashboard.php"); // Redirect student users to student dashboard
+            } else {
+                header("Location: admin_dashboard.php"); // Redirect other users to admin dashboard
+            }
             exit;
         } else {
             $error = "Invalid password.";

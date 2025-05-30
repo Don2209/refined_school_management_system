@@ -26,7 +26,11 @@ $associatedId = $_SESSION['associated_id'] ?? null;
 function checkAccess($allowedRoles) {
     global $userRole;
     if (!in_array($userRole, $allowedRoles)) {
-        header('Location: admin_dashboard.php'); // Redirect unauthorized users
+        if ($userRole === 'Parent') {
+            header('Location: parent_dashboard.php'); // Redirect parent users to parent dashboard
+        } else {
+            header('Location: admin_dashboard.php'); // Redirect other unauthorized users
+        }
         exit;
     }
 }

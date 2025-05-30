@@ -12,12 +12,16 @@ checkAccess(['Admin', 'Parent']);
 
 // Filter fees based on user role
 if ($userRole === 'Parent') {
-    $fees = $conn->query("SELECT students.student_id, CONCAT(students.first_name, ' ', students.last_name) AS student_name, 
+    $stmt = $conn->prepare("SELECT students.student_id, CONCAT(students.first_name, ' ', students.last_name) AS student_name, 
         academic_years.name AS academic_year, fee_management.total_amount, fee_management.amount_paid, fee_management.balance 
         FROM fee_management 
         JOIN students ON fee_management.student_id = students.student_id 
         JOIN academic_years ON fee_management.academic_year_id = academic_years.academic_year_id 
-        WHERE students.student_id = $associatedId");
+        WHERE students.student_id = ?");
+    $stmt->bind_param("i", $associatedId);
+    $stmt->execute();
+    $fees = $stmt->get_result();
+    $stmt->close();
 } elseif ($userRole === 'Admin') {
     $fees = $conn->query("SELECT students.student_id, CONCAT(students.first_name, ' ', students.last_name) AS student_name, 
         academic_years.name AS academic_year, fee_management.total_amount, fee_management.amount_paid, fee_management.balance 

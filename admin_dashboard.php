@@ -1,50 +1,107 @@
 <?php
 // Start session
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check if the user is logged in
+if (!isset($_SESSION['user_role']) || empty($_SESSION['user_role'])) {
+    header("Location: index.php");
+    exit();
+}
 
 // Include the database configuration
 include 'config.php';
 
 // Fetch user role and associated ID
-$userRole = $_SESSION['user_role'];
-$associatedId = $_SESSION['associated_id'];
+$userRole = $_SESSION['user_role'] ?? null;
+$associatedId = isset($_SESSION['associated_id']) ? intval($_SESSION['associated_id']) : 0;
 
-// Filter data based on user role
+// Initialize default values
+$totalStudents = 0;
+$totalStaff = 0;
+$totalClasses = 0;
+$totalSubjects = 0;
+$feeSummary = ['total_paid' => 0, 'total_balance' => 0];
+
 if ($userRole === 'Admin') {
-    // Admin sees all data
     $totalStudents = $conn->query("SELECT COUNT(*) AS count FROM students")->fetch_assoc()['count'];
     $totalStaff = $conn->query("SELECT COUNT(*) AS count FROM staff")->fetch_assoc()['count'];
     $totalClasses = $conn->query("SELECT COUNT(*) AS count FROM classes")->fetch_assoc()['count'];
     $totalSubjects = $conn->query("SELECT COUNT(*) AS count FROM subjects")->fetch_assoc()['count'];
     $feeSummary = $conn->query("SELECT SUM(amount_paid) AS total_paid, SUM(balance) AS total_balance FROM fee_management")->fetch_assoc();
-} elseif ($userRole === 'Teacher') {
-    // Teachers see data related to their classes and subjects
-    $totalStudents = $conn->query("SELECT COUNT(*) AS count FROM students WHERE current_class_id IN (
-        SELECT class_id FROM classes WHERE class_teacher_id = $associatedId
-    )")->fetch_assoc()['count'];
-    $totalStaff = 1; // Teachers only see themselves
-    $totalClasses = $conn->query("SELECT COUNT(*) AS count FROM classes WHERE class_teacher_id = $associatedId")->fetch_assoc()['count'];
-    $totalSubjects = $conn->query("SELECT COUNT(*) AS count FROM class_subjects WHERE teacher_id = $associatedId")->fetch_assoc()['count'];
-    $feeSummary = ['total_paid' => 0, 'total_balance' => 0]; // Teachers don't see fee data
-} elseif ($userRole === 'Parent') {
+} elseif ($userRole === 'Teacher' && $associatedId > 0) {
+    $stmt = $conn->prepare("SELECT COUNT(*) AS count FROM students WHERE current_class_id IN (SELECT class_id FROM classes WHERE class_teacher_id = ?)");
+    $stmt->bind_param("i", $associatedId);
+    $stmt->execute();
+    $stmt->bind_result($totalStudents);
+    $stmt->fetch();
+    $stmt->close();
+
+    $totalStaff = 1;
+
+    $stmt = $conn->prepare("SELECT COUNT(*) AS count FROM classes WHERE class_teacher_id = ?");
+    $stmt->bind_param("i", $associatedId);
+    $stmt->execute();
+    $stmt->bind_result($totalClasses);
+    $stmt->fetch();
+    $stmt->close();
+
+    $stmt = $conn->prepare("SELECT COUNT(*) AS count FROM class_subjects WHERE teacher_id = ?");
+    $stmt->bind_param("i", $associatedId);
+    $stmt->execute();
+    $stmt->bind_result($totalSubjects);
+    $stmt->fetch();
+    $stmt->close();
+} elseif ($userRole === 'Parent' && $associatedId > 0) {
     // Parents see data related to their child
     $totalStudents = 1; // Parents only see their child
     $totalStaff = 0; // Parents don't see staff data
-    $totalClasses = $conn->query("SELECT COUNT(*) AS count FROM classes WHERE class_id = (
-        SELECT current_class_id FROM students WHERE student_id = $associatedId
-    )")->fetch_assoc()['count'];
-    $totalSubjects = $conn->query("SELECT COUNT(*) AS count FROM class_subjects WHERE class_id = (
-        SELECT current_class_id FROM students WHERE student_id = $associatedId
-    )")->fetch_assoc()['count'];
-    $feeSummary = $conn->query("SELECT SUM(amount_paid) AS total_paid, SUM(balance) AS total_balance 
-        FROM fee_management WHERE student_id = $associatedId")->fetch_assoc();
-} else {
-    // Default to no data for other roles
-    $totalStudents = 0;
-    $totalStaff = 0;
-    $totalClasses = 0;
-    $totalSubjects = 0;
-    $feeSummary = ['total_paid' => 0, 'total_balance' => 0];
+
+    // Fetch the class associated with the parent's child
+    $stmt = $conn->prepare("SELECT COUNT(*) AS count FROM classes WHERE class_id = (
+        SELECT current_class_id FROM students WHERE student_id = ?
+    )");
+    $stmt->bind_param("i", $associatedId);
+    $stmt->execute();
+    $stmt->bind_result($totalClasses);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Fetch the subjects associated with the parent's child
+    $stmt = $conn->prepare("SELECT COUNT(*) AS count FROM class_subjects WHERE class_id = (
+        SELECT current_class_id FROM students WHERE student_id = ?
+    )");
+    $stmt->bind_param("i", $associatedId);
+    $stmt->execute();
+    $stmt->bind_result($totalSubjects);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Fetch the fee summary for the parent's child
+    $stmt = $conn->prepare("SELECT SUM(amount_paid), SUM(balance) FROM fee_management WHERE student_id = ?");
+    $stmt->bind_param("i", $associatedId);
+    $stmt->execute();
+    $stmt->bind_result($feeSummary['total_paid'], $feeSummary['total_balance']);
+    $stmt->fetch();
+    $stmt->close();
+
+    // Fetch student enrollment trends for the parent's child
+    $enrollmentTrends = $conn->query("SELECT academic_years.name AS year, COUNT(students.student_id) AS total_students 
+        FROM students 
+        JOIN academic_years ON students.enrollment_date BETWEEN academic_years.start_date AND academic_years.end_date 
+        WHERE students.student_id = $associatedId 
+        GROUP BY academic_years.name");
+
+    // Fetch class distribution for the parent's child
+    $classDistribution = $conn->query("SELECT classes.class_name, COUNT(students.student_id) AS total_students 
+        FROM students 
+        JOIN classes ON students.current_class_id = classes.class_id 
+        WHERE students.student_id = $associatedId 
+        GROUP BY classes.class_name");
+
+    // Fetch gender distribution for the parent's child
+    $genderDistribution = $conn->query("SELECT gender, COUNT(*) AS count FROM students WHERE student_id = $associatedId");
 }
 
 // Fetch student enrollment trends
@@ -53,14 +110,24 @@ $enrollmentTrends = $conn->query("SELECT academic_years.name AS year, COUNT(stud
     JOIN academic_years ON students.enrollment_date BETWEEN academic_years.start_date AND academic_years.end_date 
     GROUP BY academic_years.name");
 
-// Fetch class distribution
+// Fetch class distribution grouped by class
 $classDistribution = $conn->query("SELECT classes.class_name, COUNT(students.student_id) AS total_students 
     FROM students 
     JOIN classes ON students.current_class_id = classes.class_id 
     GROUP BY classes.class_name");
 
+// Prepare data for class chart
+$classData = [];
+while ($row = $classDistribution->fetch_assoc()) {
+    $classData[] = $row;
+}
+
 // Fetch gender distribution
 $genderDistribution = $conn->query("SELECT gender, COUNT(*) AS count FROM students GROUP BY gender");
+$genderData = [];
+while ($row = $genderDistribution->fetch_assoc()) {
+    $genderData[] = $row;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -152,22 +219,7 @@ $genderDistribution = $conn->query("SELECT gender, COUNT(*) AS count FROM studen
 					<div class="head">
 						<h3>Class Distribution</h3>
 					</div>
-					<table>
-						<thead>
-							<tr>
-								<th>Class Name</th>
-								<th>Total Students</th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php while ($row = $classDistribution->fetch_assoc()): ?>
-								<tr>
-									<td><?php echo $row['class_name']; ?></td>
-									<td><?php echo $row['total_students']; ?></td>
-								</tr>
-							<?php endwhile; ?>
-						</tbody>
-					</table>
+					<div id="class-chart"></div>
 				</div>
 
 				<!-- Gender Distribution -->
@@ -187,7 +239,7 @@ $genderDistribution = $conn->query("SELECT gender, COUNT(*) AS count FROM studen
 	<script>
 		// Fee Summary Chart
 		var feeOptions = {
-			series: [<?php echo $totalFeesPaid; ?>, <?php echo $totalFeesBalance; ?>],
+			series: [<?php echo $feeSummary['total_paid'] ?? 0; ?>, <?php echo $feeSummary['total_balance'] ?? 0; ?>],
 			chart: { type: 'pie' },
 			labels: ['Total Fees Paid', 'Total Fees Balance']
 		};
@@ -213,18 +265,51 @@ $genderDistribution = $conn->query("SELECT gender, COUNT(*) AS count FROM studen
 		var enrollmentChart = new ApexCharts(document.querySelector("#enrollment-chart"), enrollmentOptions);
 		enrollmentChart.render();
 
-		// Gender Distribution Chart
-		var genderData = <?php 
-			$genderData = [];
-			while ($row = $genderDistribution->fetch_assoc()) {
-				$genderData[] = $row;
+			// Class Distribution Chart
+		var classData = <?php echo json_encode($classData); ?>;
+		var classOptions = {
+			series: [{
+				name: 'Total Students',
+				data: classData.map(item => item.total_students)
+			}],
+			chart: {
+				type: 'bar',
+				height: 350,
+				toolbar: { show: false }
+			},
+			plotOptions: {
+				bar: {
+					horizontal: false,
+					columnWidth: '55%',
+					endingShape: 'rounded'
+				}
+			},
+			dataLabels: { enabled: false },
+			stroke: { show: true, width: 2, colors: ['transparent'] },
+			xaxis: {
+				categories: classData.map(item => item.class_name),
+				title: { text: 'Classes' }
+			},
+			yaxis: {
+				title: { text: 'Total Students' }
+			},
+			fill: { opacity: 1 },
+			colors: ['#1775F1'],
+			tooltip: {
+				y: { formatter: function (val) { return val + " students"; } }
 			}
-			echo json_encode($genderData);
-		?>;
+		};
+		var classChart = new ApexCharts(document.querySelector("#class-chart"), classOptions);
+		classChart.render();
+
+		// Gender Distribution Chart
+		var genderData = <?php echo json_encode($genderData); ?>;
 		var genderOptions = {
 			series: genderData.map(item => item.count),
 			chart: { type: 'pie' },
-			labels: genderData.map(item => item.gender)
+			labels: genderData.map(item => item.gender),
+			colors: ['#1775F1', '#81D43A', '#FC3B56', '#F1F0F6'],
+			legend: { position: 'bottom' }
 		};
 		var genderChart = new ApexCharts(document.querySelector("#gender-chart"), genderOptions);
 		genderChart.render();

@@ -12,9 +12,13 @@ checkAccess(['Admin', 'Teacher', 'Parent']);
 
 // Filter students based on user role
 if ($userRole === 'Parent') {
-    $students = $conn->query("SELECT student_id, first_name, last_name, gender, date_of_birth, enrollment_date, status 
+    $stmt = $conn->prepare("SELECT student_id, first_name, last_name, gender, date_of_birth, enrollment_date, status 
         FROM students 
-        WHERE student_id = $associatedId");
+        WHERE student_id = ?");
+    $stmt->bind_param("i", $associatedId);
+    $stmt->execute();
+    $students = $stmt->get_result();
+    $stmt->close();
 } elseif ($userRole === 'Teacher') {
     $students = $conn->query("SELECT student_id, first_name, last_name, gender, date_of_birth, enrollment_date, status 
         FROM students 

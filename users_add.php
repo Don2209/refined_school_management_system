@@ -14,7 +14,7 @@ $students = $conn->query("SELECT student_id, CONCAT(first_name, ' ', last_name) 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$username = $_POST['username'];
-	$password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+	$password = $_POST['password']; // Store password as plain text
 	$userRole = $_POST['user_role'];
 	$associatedId = $_POST['associated_id'];
 

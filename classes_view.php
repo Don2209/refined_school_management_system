@@ -8,8 +8,8 @@ if (session_status() === PHP_SESSION_NONE) {
 include 'config.php';
 
 // Fetch user role and associated ID
-$userRole = $_SESSION['user_role'];
-$associatedId = $_SESSION['associated_id'];
+$userRole = $_SESSION['user_role'] ?? null;
+$associatedId = isset($_SESSION['associated_id']) ? intval($_SESSION['associated_id']) : 0;
 
 // Restrict access to Admin, Teacher, and Parent roles
 checkAccess(['Admin', 'Teacher', 'Parent']);
@@ -23,14 +23,18 @@ if ($userRole === 'Teacher') {
         LEFT JOIN staff ON classes.class_teacher_id = staff.staff_id 
         WHERE classes.class_teacher_id = $associatedId");
 } elseif ($userRole === 'Parent') {
-    $classes = $conn->query("SELECT classes.class_id, classes.class_name, academic_years.name AS academic_year, 
+    $stmt = $conn->prepare("SELECT classes.class_id, classes.class_name, academic_years.name AS academic_year, 
         classes.stream, CONCAT(staff.first_name, ' ', staff.last_name) AS class_teacher 
         FROM classes 
         JOIN academic_years ON classes.academic_year_id = academic_years.academic_year_id 
         LEFT JOIN staff ON classes.class_teacher_id = staff.staff_id 
         WHERE classes.class_id = (
-            SELECT current_class_id FROM students WHERE student_id = $associatedId
+            SELECT current_class_id FROM students WHERE student_id = ?
         )");
+    $stmt->bind_param("i", $associatedId);
+    $stmt->execute();
+    $classes = $stmt->get_result();
+    $stmt->close();
 } elseif ($userRole === 'Admin') {
     $classes = $conn->query("SELECT classes.class_id, classes.class_name, academic_years.name AS academic_year, 
         classes.stream, CONCAT(staff.first_name, ' ', staff.last_name) AS class_teacher 
