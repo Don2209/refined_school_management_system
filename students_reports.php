@@ -7,8 +7,55 @@ if (session_status() === PHP_SESSION_NONE) {
 // Include the database configuration
 include 'config.php';
 
-// Fetch student status counts
-$statusCounts = $conn->query("SELECT status, COUNT(*) AS count FROM students GROUP BY status");
+// Ensure $userId is defined and fetched from the session
+$userId = $_SESSION['user_id'] ?? null;
+if (!$userId) {
+    die("Error: User ID is not set in the session.");
+}
+
+// Check if the user is not an admin
+if ($_SESSION['user_role'] !== 'Admin') {
+    $query = "
+        SELECT status, COUNT(*) AS count 
+        FROM students 
+        WHERE current_class_id IN (
+            SELECT class_id 
+            FROM classes 
+            WHERE class_teacher_id = (
+                SELECT associated_id 
+                FROM users 
+                WHERE user_id = $userId
+            )
+        ) 
+        GROUP BY status
+    ";
+} else {
+    // Admin sees all students
+    $query = "SELECT status, COUNT(*) AS count FROM students GROUP BY status";
+}
+$statusCounts = $conn->query($query);
+
+// Debugging output for SQL errors
+if ($conn->error) {
+    die("SQL Error: " . $conn->error);
+}
+
+// Fetch total number of students for the chart
+$totalStudentsQuery = "
+    SELECT COUNT(*) AS total 
+    FROM students 
+    WHERE current_class_id IN (
+        SELECT class_id 
+        FROM classes 
+        WHERE class_teacher_id = (
+            SELECT associated_id 
+            FROM users 
+            WHERE user_id = $userId
+        )
+    )
+";
+$totalStudentsResult = $conn->query($totalStudentsQuery);
+$totalStudents = $totalStudentsResult->fetch_assoc()['total'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -20,6 +67,13 @@ $statusCounts = $conn->query("SELECT status, COUNT(*) AS count FROM students GRO
 	<title>Student Reports</title>
 	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 	<script src="js/dropdown.js" defer></script>
+	<style>
+		#status-chart {
+			width: 400px; /* Set a fixed width */
+			height: 300px; /* Set a fixed height */
+			margin: 0 auto; /* Center the chart */
+		}
+	</style>
 </head>
 <body>
 	<!-- SIDEBAR -->
@@ -60,12 +114,18 @@ $statusCounts = $conn->query("SELECT status, COUNT(*) AS count FROM students GRO
 			}
 			echo json_encode($data);
 		?>;
+		var totalStudents = <?php echo $totalStudents; ?>;
 		var options = {
 			series: statusData.map(item => item.count),
 			chart: { type: 'pie' },
 			labels: statusData.map(item => item.status),
 			colors: ['#1775F1', '#81D43A', '#FC3B56', '#F1F0F6'],
-			legend: { position: 'bottom' }
+			legend: { position: 'bottom' },
+			title: {
+				text: `Total Students: ${totalStudents}`,
+				align: 'center',
+				style: { fontSize: '16px', fontWeight: 'bold' }
+			}
 		};
 		var chart = new ApexCharts(document.querySelector("#status-chart"), options);
 		chart.render();

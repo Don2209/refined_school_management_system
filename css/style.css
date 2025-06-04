@@ -719,9 +719,9 @@ main .btn-send:hover {
 }
 
 /* Dropdown styles */
-/* Dropdown styles */
 .dropdown {
 	position: relative;
+	display: inline-block;
 }
 
 .dropdown > a {
@@ -734,13 +734,54 @@ main .btn-send:hover {
 .dropdown-menu {
 	display: none;
 	position: absolute;
-	left: 100%;
-	top: 0;
-	background: var(--light);
-	box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-	border-radius: 8px;
-	padding: 10px 0;
+	right: 0;
+	background-color: #fff;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	padding: 10px;
+	border-radius: 5px;
 	z-index: 1000;
+}
+
+.dropdown-menu.show {
+	display: block;
+}
+
+/* Ensure the dropdown icon is styled */
+.dropdown-toggle {
+	cursor: pointer;
+}
+
+.dropdown-menu h4 {
+	margin: 0 0 10px;
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.dropdown-menu ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.dropdown-menu li {
+	margin-bottom: 10px;
+}
+
+.profile-card {
+	display: flex;
+	align-items: center;
+}
+
+.profile-info h5 {
+	margin: 0;
+	font-size: 14px;
+	font-weight: bold;
+}
+
+.profile-info p {
+	margin: 0;
+	font-size: 12px;
+	color: #666;
 }
 
 .dropdown-menu a {

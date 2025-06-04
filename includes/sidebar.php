@@ -10,6 +10,28 @@
 			<li><a href="parent_results_view.php"><i class='bx bxs-bar-chart-alt-2 icon'></i> View Results</a></li>
 			<li><a href="fees_summary.php"><i class='bx bxs-wallet icon'></i> View Fees</a></li>
 			<li><a href="classes_view.php"><i class='bx bxs-school icon'></i> View Class</a></li>
+		<?php elseif ($userRole === 'Teacher'): ?>
+			<li class="dropdown">
+				<a href="#"><i class='bx bxs-user icon'></i> Students <i class='bx bx-chevron-down icon-right'></i></a>
+				<ul class="dropdown-menu">
+					<li><a href="students_view.php">View All Students</a></li>
+					<li><a href="students_reports.php">Student Reports</a></li>
+				</ul>
+			</li>
+			<li class="dropdown">
+				<a href="#"><i class='bx bxs-school icon'></i> Classes <i class='bx bx-chevron-down icon-right'></i></a>
+				<ul class="dropdown-menu">
+					<li><a href="classes_view.php">View All Classes</a></li>
+					<li><a href="classes_distribution.php">Class Distribution</a></li>
+				</ul>
+			</li>
+			<li class="dropdown">
+				<a href="#"><i class='bx bxs-bar-chart-alt-2 icon'></i> Academic Results <i class='bx bx-chevron-down icon-right'></i></a>
+				<ul class="dropdown-menu">
+					<li><a href="results_view.php">View Results</a></li>
+					<li><a href="results_add.php">Add Results</a></li>
+				</ul>
+			</li>
 		<?php else: ?>
 			<li class="dropdown">
 				<a href="#"><i class='bx bxs-user icon'></i> Students <i class='bx bx-chevron-down icon-right'></i></a>

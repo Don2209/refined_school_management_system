@@ -19,3 +19,31 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	});
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+	const dropdownToggles = document.querySelectorAll("[data-dropdown]");
+
+	dropdownToggles.forEach((toggle) => {
+		const dropdownMenu = toggle.nextElementSibling;
+
+		toggle.addEventListener("click", (e) => {
+			e.preventDefault();
+			e.stopPropagation(); // Prevent click from propagating
+			dropdownMenu.classList.toggle("show");
+
+			// Close other dropdowns
+			document.querySelectorAll(".dropdown-menu").forEach((menu) => {
+				if (menu !== dropdownMenu) {
+					menu.classList.remove("show");
+				}
+			});
+		});
+	});
+
+	// Close dropdown when clicking outside
+	document.addEventListener("click", () => {
+		document.querySelectorAll(".dropdown-menu").forEach((menu) => {
+			menu.classList.remove("show");
+		});
+	});
+});

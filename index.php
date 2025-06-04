@@ -19,27 +19,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
-        if ($password === $user['password_hash']) { // Compare plain text password
+        if ($password === $user['password_hash']) { // Direct comparison for plain text passwords
             // Successful login
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['user_role'] = $user['user_role'];
+            $_SESSION['associated_id'] = $user['user_id']; // Set associated_id for the logged-in user
 
             // Redirect based on user role
             if ($user['user_role'] === 'Parent') {
-                header("Location: parent_dashboard.php"); // Redirect parent users to parent dashboard
+                header("Location: parent_dashboard.php");
             } elseif ($user['user_role'] === 'Teacher') {
-                header("Location: teacher_dashboard.php"); // Redirect teacher users to teacher dashboard
+                header("Location: admin_dashboard.php");
             } elseif ($user['user_role'] === 'Student') {
-                header("Location: student_dashboard.php"); // Redirect student users to student dashboard
+                header("Location: student_dashboard.php");
             } else {
-                header("Location: admin_dashboard.php"); // Redirect other users to admin dashboard
+                header("Location: admin_dashboard.php");
             }
             exit;
         } else {
-            $error = "Invalid password.";
+            $error = "The password you entered is incorrect. Please try again.";
         }
     } else {
-        $error = "Invalid username or account is disabled.";
+        $error = "The username you entered does not exist or the account is disabled. Please contact support.";
     }
     $stmt->close();
 }

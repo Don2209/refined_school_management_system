@@ -7,6 +7,9 @@ if (session_status() === PHP_SESSION_NONE) {
 // Include the database configuration
 include 'config.php';
 
+// Fetch all available classes
+$classes = $conn->query("SELECT class_id, class_name FROM classes");
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$firstName = $_POST['first_name'];
@@ -15,9 +18,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$dateOfBirth = $_POST['date_of_birth'];
 	$enrollmentDate = $_POST['enrollment_date'];
 	$address = $_POST['address'];
+	$classId = $_POST['class_id'];
+	$previousSchoolName = $_POST['previous_school_name'];
+	$levelCompleted = $_POST['level_completed'];
+	$previousSchoolStartDate = $_POST['previous_school_start_date'];
+	$previousSchoolEndDate = $_POST['previous_school_end_date'];
+	$reasonForLeaving = $_POST['reason_for_leaving'];
+	$performanceSummary = $_POST['performance_summary'];
 
-	$conn->query("INSERT INTO students (first_name, last_name, gender, date_of_birth, enrollment_date, address) 
-		VALUES ('$firstName', '$lastName', '$gender', '$dateOfBirth', '$enrollmentDate', '$address')");
+	$conn->query("INSERT INTO students (first_name, last_name, gender, date_of_birth, enrollment_date, address, class_id, previous_school_name, level_completed, previous_school_start_date, previous_school_end_date, reason_for_leaving, performance_summary) 
+		VALUES ('$firstName', '$lastName', '$gender', '$dateOfBirth', '$enrollmentDate', '$address', '$classId', '$previousSchoolName', '$levelCompleted', '$previousSchoolStartDate', '$previousSchoolEndDate', '$reasonForLeaving', '$performanceSummary')");
 	header('Location: students_view.php');
 	exit;
 }
@@ -77,12 +87,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 								<input type="date" name="date_of_birth" required>
 							</div>
 							<div class="form-group">
+								<label>Class</label>
+								<select name="class_id" required>
+									<option value="" disabled selected>Select class</option>
+									<?php while ($class = $classes->fetch_assoc()): ?>
+										<option value="<?php echo $class['class_id']; ?>">
+											<?php echo htmlspecialchars($class['class_name']); ?>
+										</option>
+									<?php endwhile; ?>
+								</select>
+							</div>
+							<div class="form-group">
 								<label>Enrollment Date</label>
 								<input type="date" name="enrollment_date" required>
 							</div>
 							<div class="form-group">
 								<label>Address</label>
 								<textarea name="address" placeholder="Enter address" required></textarea>
+							</div>
+							<div class="form-group">
+								<label>Previous School Name</label>
+								<input type="text" name="previous_school_name" placeholder="Enter previous school name" required>
+							</div>
+							<div class="form-group">
+								<label>Level Completed</label>
+								<select name="level_completed" required>
+									<option value="" disabled selected>Select level</option>
+									<option value="Primary">Primary</option>
+									<option value="Secondary">Secondary</option>
+									<option value="O-Level">O-Level</option>
+									<option value="A-Level">A-Level</option>
+									<option value="Other">Other</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>Start Date</label>
+								<input type="date" name="previous_school_start_date">
+							</div>
+							<div class="form-group">
+								<label>End Date</label>
+								<input type="date" name="previous_school_end_date">
+							</div>
+							<div class="form-group">
+								<label>Reason for Leaving</label>
+								<textarea name="reason_for_leaving" placeholder="Enter reason for leaving"></textarea>
+							</div>
+							<div class="form-group">
+								<label>Performance Summary</label>
+								<textarea name="performance_summary" placeholder="Enter performance summary"></textarea>
 							</div>
 							<button type="submit" class="btn-submit">Add Student</button>
 						</form>
